@@ -9,9 +9,13 @@ class TicketDisplay {
         add_filter('em_booking_form_tickets_cols', [$this, 'em_booking_form_tickets_cols'], 10, 2);
         add_action('em_booking_form_tickets_col_covid_bond', [$this, 'em_booking_form_tickets_col_covid_bond'], 10, 2);
 
-        // WC Cart
-        add_action( 'woocommerce_after_cart_item_name', [$this, 'woocommerce_after_cart_item_name'], 10, 2 );
-        add_filter( 'woocommerce_cart_item_price', [$this, 'woocommerce_cart_item_price'], 10, 3 );
+        // WC Cart & Checkout
+        #add_action( 'woocommerce_after_cart_item_name', [$this, 'woocommerce_after_cart_item_name'], 10, 2 );
+        #add_filter( 'woocommerce_cart_item_price', [$this, 'woocommerce_cart_item_price'], 10, 3 );
+
+        #add_filter( 'woocommerce_cart_item_name', [$this, 'woocommerce_cart_item_name'], 10, 3 );
+        add_filter( 'woocommerce_cart_item_subtotal', [$this, 'woocommerce_cart_item_subtotal'], 10, 3 );
+
     }
 
     public function em_booking_form_tickets_cols( $columns, $EM_Event ) {
@@ -36,21 +40,30 @@ class TicketDisplay {
         <?php
     }
 
-    public function woocommerce_after_cart_item_name( $cart_item, $cart_item_key ) {
-        // check ticket has covid bond enabled
-        {
-            echo '<div><em>Includes Non Refundbable Covid Bond</em></div>';
-        }
-    }
+    #public function woocommerce_after_cart_item_name( $cart_item, $cart_item_key ) {
+    #    // check ticket has covid bond enabled
+    #    {
+    #        echo '<div><em>Includes Non Refundbable Covid Bond</em></div>';
+    #    }
+    #}
 
-    public function woocommerce_cart_item_price( $price, $cart_item, $cart_item_key ) {
+    #public function woocommerce_cart_item_price( $price, $cart_item, $cart_item_key ) {
+    #    // check ticket has covid bond enabled
+    #    {
+    #        $product = apply_filters( 'woocommerce_cart_item_product', $cart_item['data'], $cart_item, $cart_item_key );
+    #        $bond    = $product->get_price() / Self::COVID_BOND_PERCENTAGE;
+    #        $price  .= '<br /><em>'. wc_price( $bond ) .'</em>';
+    #    }
+    #    return $price;
+    #}
+
+    public function woocommerce_cart_item_subtotal( $subtotal, $cart_item, $cart_item_key ) {
         // check ticket has covid bond enabled
         {
             $product = apply_filters( 'woocommerce_cart_item_product', $cart_item['data'], $cart_item, $cart_item_key );
-            $bond    = $product->get_price() / Self::COVID_BOND_PERCENTAGE;
-            return $price . '<br /><em>'. wc_price( $bond ) .'</em>';
+            $bond    = ( $product->get_price() * $cart_item['quantity'] ) / Self::COVID_BOND_PERCENTAGE;
+            $subtotal .= '&nbsp;<small>(includes '.wc_price( $bond ).' non-refundable covid bond)</small>';
         }
-        return $price;
+        return $subtotal;
     }
-
 }
