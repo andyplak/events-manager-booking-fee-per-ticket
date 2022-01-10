@@ -16,6 +16,9 @@ class TicketDisplay {
         #add_filter( 'woocommerce_cart_item_name', [$this, 'woocommerce_cart_item_name'], 10, 3 );
         add_filter( 'woocommerce_cart_item_subtotal', [$this, 'woocommerce_cart_item_subtotal'], 10, 3 );
 
+        // WC Order Summary (inc emails)
+        add_action('woocommerce_order_item_meta_end', [$this, 'woocommerce_order_item_meta_end'], 20, 4);
+
     }
 
     public function em_booking_form_tickets_cols( $columns, $EM_Event ) {
@@ -73,6 +76,20 @@ class TicketDisplay {
             }
         }
         return $subtotal;
+    }
+
+    public function woocommerce_order_item_meta_end( $item_id, $item, $order, $plain_text = false ) {
+        if( $ticket_id = $item->get_meta('_em_ticket_id') ) {
+            $EM_Ticket  = new EM_Ticket( $ticket_id );
+            if( $EM_Ticket && $this->has_covid_bond( $EM_Ticket ) ) {
+                #$booking_id = $item->get_meta('_em_booking_id');
+                #$EM_Booking = em_get_booking( $booking_id );
+                #$ticket_bookings = $EM_Booking->get_tickets_bookings();
+                $price = $EM_Ticket->get_price();
+                $bond  = ( $price * $item->get_quantity() ) / Self::COVID_BOND_PERCENTAGE;
+                echo '<em>Includes '.wc_price( $bond ).' non-refundable covid bond per ticket</em>';
+            }
+        }
     }
 
     private function has_covid_bond( $EM_Ticket ) {
