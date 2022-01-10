@@ -62,14 +62,15 @@ class TicketDisplay {
     #}
 
     public function woocommerce_cart_item_subtotal( $subtotal, $cart_item, $cart_item_key ) {
-        $product = apply_filters( 'woocommerce_cart_item_product', $cart_item['data'], $cart_item, $cart_item_key );
-        $em_object_map = explode( '-', $product->get_sku() );
-        $EM_Ticket = new EM_Ticket( str_replace('EM-', '', $em_object_map[2] ) );
+        if( isset( $cart_item['_em_ticket_id'] ) ) {
+            $product = apply_filters( 'woocommerce_cart_item_product', $cart_item['data'], $cart_item, $cart_item_key );
+            $EM_Ticket = new EM_Ticket( $cart_item['_em_ticket_id'] );
 
-        // check ticket has covid bond enabled
-        if( $EM_Ticket && $this->has_covid_bond( $EM_Ticket ) ) {
-            $bond    = ( $product->get_price() * $cart_item['quantity'] ) / Self::COVID_BOND_PERCENTAGE;
-            $subtotal .= '&nbsp;<small>(includes '.wc_price( $bond ).' non-refundable covid bond)</small>';
+            // check ticket has covid bond enabled
+            if( $EM_Ticket && $this->has_covid_bond( $EM_Ticket ) ) {
+                $bond    = ( $product->get_price() * $cart_item['quantity'] ) / Self::COVID_BOND_PERCENTAGE;
+                $subtotal .= '&nbsp;<small>(includes '.wc_price( $bond ).' non-refundable covid bond)</small>';
+            }
         }
         return $subtotal;
     }
