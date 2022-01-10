@@ -30,14 +30,18 @@ class TicketDisplay {
     }
 
     public function em_booking_form_tickets_col_covid_bond($EM_Ticket, $EM_Event) {
-        $price = $EM_Ticket->get_price();
-        $bond = $price / Self::COVID_BOND_PERCENTAGE;
+        if( $this->has_covid_bond( $EM_Ticket ) ) {
+            $price = $EM_Ticket->get_price();
+            $bond = $price / Self::COVID_BOND_PERCENTAGE;
 
-        ?>
-        <td class="em-bookings-ticket-table-covid-bond">
-            <?php echo $EM_Ticket->format_price( $bond ) ?>
-        </td>
-        <?php
+            ?>
+            <td class="em-bookings-ticket-table-covid-bond">
+                <?php echo $EM_Ticket->format_price( $bond ) ?>
+            </td>
+            <?php
+        }else{
+            echo '<td></td>';
+        }
     }
 
     #public function woocommerce_after_cart_item_name( $cart_item, $cart_item_key ) {
@@ -58,12 +62,19 @@ class TicketDisplay {
     #}
 
     public function woocommerce_cart_item_subtotal( $subtotal, $cart_item, $cart_item_key ) {
+        $product = apply_filters( 'woocommerce_cart_item_product', $cart_item['data'], $cart_item, $cart_item_key );
+        $em_object_map = explode( '-', $product->get_sku() );
+        $EM_Ticket = new EM_Ticket( str_replace('EM-', '', $em_object_map[2] ) );
+
         // check ticket has covid bond enabled
-        {
-            $product = apply_filters( 'woocommerce_cart_item_product', $cart_item['data'], $cart_item, $cart_item_key );
+        if( $EM_Ticket && $this->has_covid_bond( $EM_Ticket ) ) {
             $bond    = ( $product->get_price() * $cart_item['quantity'] ) / Self::COVID_BOND_PERCENTAGE;
             $subtotal .= '&nbsp;<small>(includes '.wc_price( $bond ).' non-refundable covid bond)</small>';
         }
         return $subtotal;
+    }
+
+    private function has_covid_bond( $EM_Ticket ) {
+        return ( isset( $EM_Ticket->ticket_meta['covid_bond'] ) && $EM_Ticket->ticket_meta['covid_bond'] ? true : false );
     }
 }
