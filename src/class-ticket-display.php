@@ -121,7 +121,6 @@ class TicketDisplay {
         if( $product && ( $ticket_id = $item->get_meta('_em_ticket_id') ) ) {
             $EM_Ticket = new EM_Ticket( $ticket_id );
             if( $EM_Ticket && $this->has_covid_bond( $EM_Ticket ) ) {
-                _dump($item);
                 $subtotal = $item->get_order()->get_item_subtotal( $item, false, true );
                 $bond  = $subtotal / Self::COVID_BOND_PERCENTAGE;
                 $bond = wc_price( $bond );

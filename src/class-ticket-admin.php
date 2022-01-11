@@ -9,10 +9,14 @@ class TicketAdmin {
     }
 
     public function em_ticket_save_pre( $EM_Ticket ) {
-        if( isset( $_REQUEST[ 'em_tickets' ][ $EM_Ticket->ticket_id ][ 'ticket_covid_bond' ] ) ) {
-            $EM_Ticket->ticket_meta['covid_bond'] = absint( $_REQUEST[ 'em_tickets' ][ $EM_Ticket->ticket_id ][ 'ticket_covid_bond' ] );
-        }elseif( isset( $EM_Ticket->ticket_meta['covid_bond'] ) && $EM_Ticket->ticket_meta['covid_bond'] == 1 ) {
-            $EM_Ticket->ticket_meta['covid_bond'] = 0;
+        foreach( $_REQUEST[ 'em_tickets' ] as $request_ticket ) {
+            if( $request_ticket['ticket_id'] == $EM_Ticket->ticket_id ) {
+                if( isset( $request_ticket[ 'ticket_covid_bond' ] ) ) {
+                    $EM_Ticket->ticket_meta['covid_bond'] = absint( $request_ticket[ 'ticket_covid_bond' ] );
+                }elseif( isset( $EM_Ticket->ticket_meta['covid_bond'] ) && $EM_Ticket->ticket_meta['covid_bond'] == 1 ) {
+                    $EM_Ticket->ticket_meta['covid_bond'] = 0;
+                }
+            }
         }
     }
 
