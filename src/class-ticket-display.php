@@ -8,6 +8,7 @@ class TicketDisplay {
         // Booking form
         add_filter('em_booking_form_tickets_cols', [$this, 'em_booking_form_tickets_cols'], 10, 2);
         add_action('em_booking_form_tickets_col_covid_bond', [$this, 'em_booking_form_tickets_col_covid_bond'], 10, 2);
+        add_action('em_booking_form_tickets_col_refundable', [$this, 'em_booking_form_tickets_col_refundable'], 10, 2);
 
         // WC Cart & Checkout
         #add_action( 'woocommerce_after_cart_item_name', [$this, 'woocommerce_after_cart_item_name'], 10, 2 );
@@ -26,6 +27,7 @@ class TicketDisplay {
         {
             $spaces = $columns['spaces'];
             unset( $columns['spaces'] );
+            $columns['refundable'] = __('Refundable Portion','events-manager');
             $columns['covid_bond'] = __('Covid Bond','events-manager');
             $columns['spaces'] = $spaces;
         }
@@ -40,6 +42,21 @@ class TicketDisplay {
             ?>
             <td class="em-bookings-ticket-table-covid-bond">
                 <?php echo $EM_Ticket->format_price( $bond ) ?>
+            </td>
+            <?php
+        }else{
+            echo '<td></td>';
+        }
+    }
+
+    public function em_booking_form_tickets_col_refundable($EM_Ticket, $EM_Event) {
+        if( $this->has_covid_bond( $EM_Ticket ) ) {
+            $price = $EM_Ticket->get_price();
+            $refundable = ( $price / Self::COVID_BOND_PERCENTAGE ) * 9;
+
+            ?>
+            <td class="em-bookings-ticket-table-refundable">
+                <?php echo $EM_Ticket->format_price( $refundable ) ?>
             </td>
             <?php
         }else{
