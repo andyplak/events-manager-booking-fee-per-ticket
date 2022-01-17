@@ -31,7 +31,7 @@ class TicketDisplay {
             $spaces = $columns['spaces'];
             unset( $columns['spaces'] );
             $columns['refundable'] = __('Refundable Portion','events-manager');
-            $columns['covid_bond'] = __('Covid Bond','events-manager');
+            $columns['covid_bond'] = __('Non refundable CIP','events-manager');
             $columns['spaces'] = $spaces;
         }
         return $columns;
@@ -70,7 +70,7 @@ class TicketDisplay {
     #public function woocommerce_after_cart_item_name( $cart_item, $cart_item_key ) {
     #    // check ticket has covid bond enabled
     #    {
-    #        echo '<div><em>Includes Non Refundbable Covid Bond</em></div>';
+    #        echo '<div><em>Includes Non refundable CIP</em></div>';
     #    }
     #}
 
@@ -92,7 +92,7 @@ class TicketDisplay {
             // check ticket has covid bond enabled
             if( $EM_Ticket && $this->has_covid_bond( $EM_Ticket ) ) {
                 $bond    = ( $product->get_price() * $cart_item['quantity'] ) / Self::COVID_BOND_PERCENTAGE;
-                $subtotal .= '&nbsp;<small>(includes '.wc_price( $bond ).' non-refundable covid bond)</small>';
+                $subtotal .= '&nbsp;<small>(includes '.wc_price( $bond ).' non refundable CIP)</small>';
             }
         }
         return $subtotal;
@@ -107,7 +107,7 @@ class TicketDisplay {
                 #$ticket_bookings = $EM_Booking->get_tickets_bookings();
                 $price = $EM_Ticket->get_price();
                 $bond  = ( $price * $item->get_quantity() ) / Self::COVID_BOND_PERCENTAGE;
-                echo '<em>Includes '.wc_price( $bond ).' non-refundable covid bond per ticket</em>';
+                echo '<br /><em>Includes '.wc_price( $bond ).' non refundable CIP</em>';
             }
         }
     }

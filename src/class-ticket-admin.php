@@ -22,7 +22,7 @@ class TicketAdmin {
 
     public function em_event_edit_ticket_td( $EM_Ticket ) {
         if( $this->has_covid_bond( $EM_Ticket ) ) {
-            echo '<td><small>Covid Bond</small></td>';
+            echo '<td><small>Non refundable CIP</small></td>';
         }
     }
 
@@ -30,7 +30,7 @@ class TicketAdmin {
         $checked = ( $this->has_covid_bond( $EM_Ticket ) ? 'checked="checked"' : '' );
         ?>
         <div class="covid-bond">
-			<label title="<?php esc_attr_e('If checked tickets will have info about the bond displayed to users.','events-manager'); ?>"><?php esc_html_e('Covid Bond?','events-manager') ?></label>
+			<label title="<?php esc_attr_e('If checked tickets will have info about the bond displayed to users.','events-manager'); ?>"><?php esc_html_e('Non refundable CIP?','events-manager') ?></label>
 			<input type="checkbox" value="1" name="em_tickets[<?php echo $col_count; ?>][ticket_covid_bond]" <?php echo $checked ?> class="covid_bond" />
 		</div>
         <?php
