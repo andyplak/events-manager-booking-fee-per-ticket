@@ -28,10 +28,13 @@ class TicketDisplay {
     public function em_booking_form_tickets_cols( $columns, $EM_Event ) {
         // Check event is setup for Covid Bonds?
         {
+            $price  = $columns['price'];
             $spaces = $columns['spaces'];
+            unset( $columns['price'] );
             unset( $columns['spaces'] );
             $columns['refundable'] = __('Refundable Portion','events-manager');
             $columns['covid_bond'] = __('Non refundable CIP','events-manager');
+            $columns['price']  = $price;
             $columns['spaces'] = $spaces;
         }
         return $columns;
