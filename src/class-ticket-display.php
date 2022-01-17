@@ -10,12 +10,16 @@ class TicketDisplay {
         add_action('em_booking_form_tickets_col_covid_bond', [$this, 'em_booking_form_tickets_col_covid_bond'], 10, 2);
         add_action('em_booking_form_tickets_col_refundable', [$this, 'em_booking_form_tickets_col_refundable'], 10, 2);
 
-        // WC Cart, Checkout and User Menu
+        // WC Cart & Checkout
         #add_action( 'woocommerce_after_cart_item_name', [$this, 'woocommerce_after_cart_item_name'], 10, 2 );
         #add_filter( 'woocommerce_cart_item_price', [$this, 'woocommerce_cart_item_price'], 10, 3 );
 
         #add_filter( 'woocommerce_cart_item_name', [$this, 'woocommerce_cart_item_name'], 10, 3 );
         add_filter( 'woocommerce_cart_item_subtotal', [$this, 'woocommerce_cart_item_subtotal'], 10, 3 );
+        add_filter( 'woocommerce_cart_totals_before_order_total', [$this, 'woocommerce_totals_before_order_total'] );
+        add_filter( 'woocommerce_review_order_before_order_total', [$this, 'woocommerce_totals_before_order_total'] );
+
+        // WC User Account Menu
         add_filter( 'woocommerce_account_menu_items', [$this, 'woocommerce_account_menu_items'], 30 );
 
         // WC Order Summary (inc emails)
@@ -107,6 +111,32 @@ class TicketDisplay {
             }
         }
         return $subtotal;
+    }
+
+    public function woocommerce_totals_before_order_total() {
+        $total_bond = 0;
+
+        foreach ( WC()->cart->get_cart() as $cart_item_key => $cart_item ) {
+            if( isset( $cart_item['_em_ticket_id'] ) ) {
+                $product = apply_filters( 'woocommerce_cart_item_product', $cart_item['data'], $cart_item, $cart_item_key );
+                $EM_Ticket = new EM_Ticket( $cart_item['_em_ticket_id'] );
+
+                if( $EM_Ticket && $this->has_covid_bond( $EM_Ticket ) ) {
+                    $total_bond += ( $product->get_price() * $cart_item['quantity'] ) / Self::COVID_BOND_PERCENTAGE;
+                }
+            }
+        }
+
+        if( $total_bond > 0 ) {
+            ?>
+            <tr class="covid-bond-total">
+                <th>Includes non refundable CIP</th>
+                <td>
+                    <span class="woocommerce-Price-amount amount"><bdi><?php echo wc_price( $total_bond ) ?></bdi></span>
+                </td>
+            </tr>
+            <?php
+        }
     }
 
     public function woocommerce_order_item_meta_end( $item_id, $item, $order, $plain_text = false ) {
