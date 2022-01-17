@@ -10,12 +10,13 @@ class TicketDisplay {
         add_action('em_booking_form_tickets_col_covid_bond', [$this, 'em_booking_form_tickets_col_covid_bond'], 10, 2);
         add_action('em_booking_form_tickets_col_refundable', [$this, 'em_booking_form_tickets_col_refundable'], 10, 2);
 
-        // WC Cart & Checkout
+        // WC Cart, Checkout and User Menu
         #add_action( 'woocommerce_after_cart_item_name', [$this, 'woocommerce_after_cart_item_name'], 10, 2 );
         #add_filter( 'woocommerce_cart_item_price', [$this, 'woocommerce_cart_item_price'], 10, 3 );
 
         #add_filter( 'woocommerce_cart_item_name', [$this, 'woocommerce_cart_item_name'], 10, 3 );
         add_filter( 'woocommerce_cart_item_subtotal', [$this, 'woocommerce_cart_item_subtotal'], 10, 3 );
+        add_filter( 'woocommerce_account_menu_items', [$this, 'woocommerce_account_menu_items'], 30 );
 
         // WC Order Summary (inc emails)
         add_action('woocommerce_order_item_meta_end', [$this, 'woocommerce_order_item_meta_end'], 20, 4);
@@ -23,6 +24,7 @@ class TicketDisplay {
         // WC Admin order summary
         add_action( 'woocommerce_admin_order_item_headers', [$this, 'woocommerce_admin_order_item_headers'] );
         add_action( 'woocommerce_admin_order_item_values', [$this, 'woocommerce_admin_order_item_values'], 10, 3);
+
     }
 
     public function em_booking_form_tickets_cols( $columns, $EM_Event ) {
@@ -86,6 +88,12 @@ class TicketDisplay {
     #    }
     #    return $price;
     #}
+    public function woocommerce_account_menu_items( $items ) {
+        if( isset( $items['my-bookings'] ) ) {
+            unset( $items['my-bookings'] );
+        }
+        return $items;
+    }
 
     public function woocommerce_cart_item_subtotal( $subtotal, $cart_item, $cart_item_key ) {
         if( isset( $cart_item['_em_ticket_id'] ) ) {
