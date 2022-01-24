@@ -6,7 +6,7 @@ class TicketDisplay {
 
     public function __construct() {
         // Booking form
-        add_filter('em_booking_form_tickets_cols', [$this, 'em_booking_form_tickets_cols'], 10, 2);
+        add_filter('em_booking_form_tickets_cols',           [$this, 'em_booking_form_tickets_cols'], 10, 2);
         add_action('em_booking_form_tickets_col_covid_bond', [$this, 'em_booking_form_tickets_col_covid_bond'], 10, 2);
         add_action('em_booking_form_tickets_col_refundable', [$this, 'em_booking_form_tickets_col_refundable'], 10, 2);
 
@@ -57,7 +57,7 @@ class TicketDisplay {
             </td>
             <?php
         }else{
-            echo '<td></td>';
+            echo '<td class="em-bookings-ticket-table-covid_bond"></td>';
         }
     }
 
@@ -72,9 +72,10 @@ class TicketDisplay {
             </td>
             <?php
         }else{
-            echo '<td></td>';
+            echo '<td class="em-bookings-ticket-table-refundable"></td>';
         }
     }
+
 
     #public function woocommerce_after_cart_item_name( $cart_item, $cart_item_key ) {
     #    // check ticket has covid bond enabled
