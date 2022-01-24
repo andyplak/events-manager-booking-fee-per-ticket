@@ -6,9 +6,10 @@ class TicketDisplay {
 
     public function __construct() {
         // Booking form
-        add_filter('em_booking_form_tickets_cols',           [$this, 'em_booking_form_tickets_cols'], 10, 2);
-        add_action('em_booking_form_tickets_col_covid_bond', [$this, 'em_booking_form_tickets_col_covid_bond'], 10, 2);
-        add_action('em_booking_form_tickets_col_refundable', [$this, 'em_booking_form_tickets_col_refundable'], 10, 2);
+        add_filter('em_booking_form_tickets_cols',           [$this, 'em_booking_form_tickets_cols'], 10, 2 );
+        add_action('em_booking_form_tickets_col_cb_type',    [$this, 'em_booking_form_tickets_col_cb_type'] );
+        add_action('em_booking_form_tickets_col_covid_bond', [$this, 'em_booking_form_tickets_col_covid_bond'] );
+        add_action('em_booking_form_tickets_col_refundable', [$this, 'em_booking_form_tickets_col_refundable'] );
 
         // WC Cart & Checkout
         #add_action( 'woocommerce_after_cart_item_name', [$this, 'woocommerce_after_cart_item_name'], 10, 2 );
@@ -38,15 +39,39 @@ class TicketDisplay {
             $spaces = $columns['spaces'];
             unset( $columns['price'] );
             unset( $columns['spaces'] );
+            unset( $columns['type'] );
+            $columns['cb_type']    = __('Ticket Type', 'events-manager');
             $columns['refundable'] = __('Refundable Portion','events-manager');
             $columns['covid_bond'] = __('Non refundable CIP','events-manager');
-            $columns['price']  = $price;
-            $columns['spaces'] = $spaces;
+            $columns['price']      = $price;
+            $columns['spaces']     = $spaces;
         }
         return $columns;
     }
 
-    public function em_booking_form_tickets_col_covid_bond($EM_Ticket, $EM_Event) {
+    /**
+     * This replaces the default type column in the ticket list. Allows us to add extra info at the end of the description
+     */
+    public function em_booking_form_tickets_col_cb_type($EM_Ticket) {
+        $bond_info = '';
+        if( $this->has_covid_bond( $EM_Ticket ) ) {
+            $price = $EM_Ticket->get_price();
+            $bond = $price / Self::COVID_BOND_PERCENTAGE;
+            $bond_info = '<br /><span class="covid-bond-xs-summary">(includes '
+                .$EM_Ticket->format_price( $bond ).' non refundable CIP)</span>';
+        }
+        ?>
+        <td class="em-bookings-ticket-table-type">
+            <strong><?php echo wp_kses_data($EM_Ticket->ticket_name); ?></strong>
+            <?php if(!empty($EM_Ticket->ticket_description)) :?><br>
+                <span class="ticket-desc"><?php echo wp_kses($EM_Ticket->ticket_description,$allowedposttags); ?></span>
+            <?php endif; ?>
+            <?php echo $bond_info ?>
+        </td>
+        <?php
+    }
+
+    public function em_booking_form_tickets_col_covid_bond($EM_Ticket) {
         if( $this->has_covid_bond( $EM_Ticket ) ) {
             $price = $EM_Ticket->get_price();
             $bond = $price / Self::COVID_BOND_PERCENTAGE;
@@ -61,7 +86,7 @@ class TicketDisplay {
         }
     }
 
-    public function em_booking_form_tickets_col_refundable($EM_Ticket, $EM_Event) {
+    public function em_booking_form_tickets_col_refundable($EM_Ticket) {
         if( $this->has_covid_bond( $EM_Ticket ) ) {
             $price = $EM_Ticket->get_price();
             $refundable = ( $price / Self::COVID_BOND_PERCENTAGE ) * 9;
