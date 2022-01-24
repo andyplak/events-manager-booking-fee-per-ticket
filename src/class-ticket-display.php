@@ -157,7 +157,7 @@ class TicketDisplay {
             ?>
             <tr class="covid-bond-total">
                 <th>Includes non refundable CIP</th>
-                <td>
+                <td data-title="Includes non refundable CIP">
                     <span class="woocommerce-Price-amount amount"><bdi><?php echo wc_price( $total_bond ) ?></bdi></span>
                 </td>
             </tr>
