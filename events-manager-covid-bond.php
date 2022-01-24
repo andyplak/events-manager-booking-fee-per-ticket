@@ -21,7 +21,10 @@ function ad_ac_init() {
     new TicketDisplay();
 
     if( is_admin() ) {
+        require plugin_dir_path( __FILE__ ) . 'src/class-bookings-admin.php';
         require plugin_dir_path( __FILE__ ) . 'src/class-ticket-admin.php';
+
+        new BookingsAdmin();
         new TicketAdmin();
     }
 }
