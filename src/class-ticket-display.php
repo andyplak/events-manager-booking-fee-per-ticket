@@ -52,7 +52,7 @@ class TicketDisplay {
             $bond = $price / Self::COVID_BOND_PERCENTAGE;
 
             ?>
-            <td class="em-bookings-ticket-table-covid-bond">
+            <td class="em-bookings-ticket-table-covid_bond">
                 <?php echo $EM_Ticket->format_price( $bond ) ?>
             </td>
             <?php
