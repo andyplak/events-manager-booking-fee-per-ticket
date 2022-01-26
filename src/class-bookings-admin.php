@@ -29,7 +29,7 @@ class BookingsAdmin {
                 if( $EM_Ticket ) {
                     // Check if ticket has covid bond
                     if( isset( $EM_Ticket->ticket_meta['covid_bond'] ) && $EM_Ticket->ticket_meta['covid_bond'] ) {
-                        return 0.9;
+                        return ( 100 - TicketDisplay::COVID_BOND_PERCENTAGE ) / 100;
                     }
                 }
             }
