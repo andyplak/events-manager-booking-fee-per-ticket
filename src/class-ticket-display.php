@@ -12,7 +12,7 @@ class TicketDisplay {
         add_action('em_booking_form_tickets_col_refundable', [$this, 'em_booking_form_tickets_col_refundable'] );
 
         // Store covid bond data in booking meta
-        add_filter('em_bookings_added', [$this, 'em_bookings_added'], 15, 2);
+        add_action('woocommerce_checkout_update_order_meta', [$this, 'woocommerce_checkout_update_order_meta'], 20, 1);
 
         // WC Cart & Checkout
         #add_action( 'woocommerce_after_cart_item_name', [$this, 'woocommerce_after_cart_item_name'], 10, 2 );
@@ -122,32 +122,37 @@ class TicketDisplay {
     #    return $price;
     #}
 
+    // Save CIP totals into booking_meta after checkout
+    public function woocommerce_checkout_update_order_meta( $order_id ) {
 
-    /**
-     *
-     * Store covid bond data in booking meta
-     */
-    public function em_bookings_added( $EM_Booking ) {
-        // Save CIP totals into booking_meta
-        $bond_total = 0;
+        // We need to store the totals in an array per booking, as an single order 'could' contain line items from different bookings
+        $bond_totals = [];
+        $order = wc_get_order($order_id);
 
-        foreach( $EM_Booking->get_tickets_bookings() as $ticket_booking ) {
-            $EM_Ticket = $ticket_booking->get_ticket();
-            if( isset( $EM_Ticket->ticket_meta['covid_bond'] ) && $EM_Ticket->ticket_meta['covid_bond']) {
-                // Tax needs to be pulled in from WC.
-                // For this we need the WC order and each of its line items which then need to be matched against the ticket booking.
-                // Hard coding for existing client as time of the essence. To be revisited (maybe)
-                $tax    = 1.2;
-                $price  = $ticket_booking->get_price();
-                $spaces = $ticket_booking->get_spaces();
-                $bond   = ( $price * $tax * $spaces ) / TicketDisplay::COVID_BOND_PERCENTAGE;
+        foreach ( $order->get_items() as $item ) {
+            $is_event_ticket = Events_Manager_WooCommerce\Product::is_event_ticket( $item->get_product() );
 
-                $bond_total += $bond;
+            if( $is_event_ticket ) {
+                $EM_Ticket = new EM_Ticket( $is_event_ticket['ticket_id'] );
+                if( $EM_Ticket ) {
+                    // Check if ticket has covid bond
+                    if( isset( $EM_Ticket->ticket_meta['covid_bond'] ) && $EM_Ticket->ticket_meta['covid_bond'] ) {
+                        $bond = ( $item->get_total() + $item->get_total_tax() ) / TicketDisplay::COVID_BOND_PERCENTAGE;
+                        if( isset( $bond_totals[ $item->get_meta('_em_booking_id') ] ) ) {
+                            $bond_totals[ $item->get_meta('_em_booking_id') ] += $bond;
+                        }else{
+                            $bond_totals[ $item->get_meta('_em_booking_id') ] = $bond;
+                        }
+                    }
+                }
             }
         }
 
-        if( $bond_total > 0 ) {
-            $EM_Booking->update_meta( 'covid_bond_total', $bond_total );
+        foreach( $bond_totals as $booking_id => $bond_total ) {
+            if( $bond_total > 0 ) {
+                $EM_Booking = em_get_booking( $booking_id );
+                $EM_Booking->update_meta( 'covid_bond_total', $bond_total );
+            }
         }
     }
 
