@@ -67,7 +67,7 @@ class TicketDisplay {
         <td class="em-bookings-ticket-table-type">
             <strong><?php echo wp_kses_data($EM_Ticket->ticket_name); ?></strong>
             <?php if(!empty($EM_Ticket->ticket_description)) :?><br>
-                <span class="ticket-desc"><?php echo wp_kses($EM_Ticket->ticket_description,$allowedposttags); ?></span>
+                <span class="ticket-desc"><?php echo $EM_Ticket->ticket_description ?></span>
             <?php endif; ?>
             <?php echo $bond_info ?>
         </td>
@@ -177,11 +177,10 @@ class TicketDisplay {
 
         foreach ( WC()->cart->get_cart() as $cart_item_key => $cart_item ) {
             if( isset( $cart_item['_em_ticket_id'] ) ) {
-                $product = apply_filters( 'woocommerce_cart_item_product', $cart_item['data'], $cart_item, $cart_item_key );
                 $EM_Ticket = new EM_Ticket( $cart_item['_em_ticket_id'] );
 
                 if( $EM_Ticket && $this->has_covid_bond( $EM_Ticket ) ) {
-                    $total_bond += ( $product->get_price() * $cart_item['quantity'] ) / Self::COVID_BOND_PERCENTAGE;
+                    $total_bond += ( $cart_item['line_total'] + $cart_item['line_tax'] ) / Self::COVID_BOND_PERCENTAGE;
                 }
             }
         }
