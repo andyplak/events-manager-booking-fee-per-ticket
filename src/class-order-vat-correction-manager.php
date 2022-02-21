@@ -83,8 +83,8 @@ class OrderVatCorrectionManager {
                     </tr>
                     <?php
 
-                    #if( !$this->isDryRun() ) {
-                    if( true ) {
+                    if( !$this->isDryRun() ) {
+
                         // Update order item values and save
 
                         $taxes = $item->get_taxes();
@@ -126,7 +126,7 @@ class OrderVatCorrectionManager {
 
                 $this->updateXero( $order );
                 //$this->sendInvoiceUpdatedEmail( $order );
-                die;
+                die; // One at a time until we're confident
             }
 
         }
@@ -248,7 +248,7 @@ class OrderVatCorrectionManager {
     }
 
     private function isDryRun() {
-        return true;
+        return !isset( $_REQUEST['commit_changes'] );
     }
 
     private function sendInvoiceUpdatedEmail( $order ) {
