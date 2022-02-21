@@ -2,8 +2,15 @@
 
 class OrderVatCorrectionManager {
 
+    private $invoice_manager;
+    private $payment_manager;
+
     public function __construct() {
         add_action('admin_menu', [$this, 'onAdminMenu'], 100 );
+
+        $settings = new \WC_XR_Settings();
+        $this->invoice_manager = new \WC_XR_Invoice_Manager( $settings );
+        $this->payment_manager = new WC_XR_Payment_Manager( $settings );
     }
 
     public function onAdminMenu() {
@@ -18,6 +25,7 @@ class OrderVatCorrectionManager {
     }
 
     public function correctVat() {
+
         $orders = $this->loadOrders();
 
         ?>
@@ -51,7 +59,6 @@ class OrderVatCorrectionManager {
                     $line_total   = number_format( $item_data['subtotal'] + $item_data['subtotal_tax'], 2 );
                     $subtotal     = $line_total / 1.125;
                     $subtotal_tax = $line_total - $subtotal;
-
 
                     ?>
                     <tr>
@@ -104,9 +111,11 @@ class OrderVatCorrectionManager {
 
                 $this->update_taxes( $order );
 
-                _dump($order);die;
+                #_dump($order);
 
+                $this->updateXero( $order );
                 //$this->sendInvoiceUpdatedEmail( $order );
+                die;
             }
 
         }
@@ -117,10 +126,9 @@ class OrderVatCorrectionManager {
 
         $orders = [];
 
-        if(isset( $_REQUEST['process_day'] ) ) {
-            $day   = sanitize_text_field( $_REQUEST['process_day'] );
-            $start = $day.' 00:00:00';
-            $end   = $day.' 23:59:59';
+        if( isset( $_REQUEST['start'] ) && isset( $_REQUEST['end'] ) ) {
+            $start = sanitize_text_field( $_REQUEST['start'] );
+            $end   = sanitize_text_field( $_REQUEST['end'] );
 
             // End date
             $orders = wc_get_orders( array(
@@ -202,6 +210,27 @@ class OrderVatCorrectionManager {
         $order->set_cart_tax( array_sum( $cart_taxes ) );
 
         $order->save();
+    }
+
+    /**
+     * Send invoice and payments to Xero after nullifying _xero_invoice_id (these have all been voided)
+     * Create new invoice with -2 appended to the order / invoice number.
+     */
+    private function updateXero( $order ) {
+
+        $order_id = version_compare( WC_VERSION, '3.0', '<' ) ? $order->id : $order->get_id();
+
+        // Unset meta to detach from voided invoice
+        $order->delete_meta_data( '_xero_invoice_id' );
+
+        add_filter( 'woocommerce_order_number', [$this, 'onWoocommerceOrderNumber'] );
+        $this->invoice_manager->send_invoice( $order_id );
+        $this->payment_manager->send_payment( $order_id );
+        remove_filter( 'woocommerce_order_number', [$this, 'onWoocommerceOrderNumber'] );
+    }
+
+    public function onWooCommerceOrderNumber( $order_id ) {
+        return $order_id.'-2';
     }
 
     private function isDryRun() {
