@@ -30,4 +30,4 @@ function ad_ac_init() {
         new OrderVatCorrectionManager();
     }
 }
-ad_ac_init();
+add_action( 'plugins_loaded', 'ad_ac_init', 20 );
