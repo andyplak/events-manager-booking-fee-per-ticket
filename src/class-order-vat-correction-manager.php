@@ -4,13 +4,15 @@ class OrderVatCorrectionManager {
 
     private $invoice_manager;
     private $payment_manager;
+    private $wc_logger;
 
     public function __construct() {
         add_action('admin_menu', [$this, 'onAdminMenu'], 100 );
 
-        $settings = new \WC_XR_Settings();
+        $settings              = new \WC_XR_Settings();
         $this->invoice_manager = new \WC_XR_Invoice_Manager( $settings );
         $this->payment_manager = new WC_XR_Payment_Manager( $settings );
+        $this->wc_logger       = wc_get_logger();
     }
 
     public function onAdminMenu() {
@@ -102,6 +104,13 @@ class OrderVatCorrectionManager {
 
                         $item->save();
                         $updated = true;
+
+                        // Log changes
+                        $message = "Line Item Tax Correction:\n";
+                        $message.= "Order #".$order->get_id().", Item: ".str_replace( '<br>', ' - ', $item_data['name'] ) ."\n";
+                        $message.= "Before - subtotal: ".$item_data['subtotal'].", tax: ".$item_data['subtotal_tax']."\n";
+                        $message.= "After  - subtotal: ".$subtotal.", tax: ".$subtotal_tax."\n";
+                        $this->wc_logger->add( 'vat-correction', $message );
                     }
                 }
             }
@@ -110,6 +119,8 @@ class OrderVatCorrectionManager {
             if( $updated ) {
 
                 $this->update_taxes( $order );
+
+                $order->add_order_note( 'Tax corrections applied to Event Tickets and Order Tax line items.');
 
                 #_dump($order);
 
@@ -184,6 +195,8 @@ class OrderVatCorrectionManager {
                 // Just do raw SQL here instead?
                 $wpdb->delete( $wpdb->prefix . 'woocommerce_order_items', array( 'order_item_id' => $tax->get_id() ) );
                 $wpdb->delete( $wpdb->prefix . 'woocommerce_order_itemmeta', array( 'order_item_id' => $tax->get_id() ) );
+
+                $this->wc_logger->add( 'vat-correction', 'Removing tax line item for tax rate #'.$tax->get_rate_id() );
                 continue;
             }
 
@@ -204,6 +217,7 @@ class OrderVatCorrectionManager {
             $item->set_tax_total( isset( $cart_taxes[ $tax_rate_id ] ) ? $cart_taxes[ $tax_rate_id ] : 0 );
             $item->set_shipping_tax_total( ! empty( $shipping_taxes[ $tax_rate_id ] ) ? $shipping_taxes[ $tax_rate_id ] : 0 );
             $order->add_item( $item );
+            $this->wc_logger->add( 'vat-correction', 'Adding new tax line item for tax rate #'.$tax_rate_id );
         }
 
         $order->set_shipping_tax( array_sum( $shipping_taxes ) );
