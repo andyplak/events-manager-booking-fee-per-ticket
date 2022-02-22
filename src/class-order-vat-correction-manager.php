@@ -48,19 +48,26 @@ class OrderVatCorrectionManager {
 
         foreach( $orders as $order ) {
             $updated = false;
+            $ticket_line_items_found = false;
 
             // Loop through each line item
-            foreach ( $order->get_items() as  $item_key => $item ) {
+            foreach ( $order->get_items() as $item ) {
                 $item_data = $item->get_data();
-                $product = $item->get_product();
 
                 // Is this line item for a ticket event
                 if( $item->get_meta('_em_ticket_id') && $item_data['tax_class'] == '' ) {
+                    $ticket_line_items_found = true;
+                    $product = $item->get_product();
 
                     // Calculations
                     $line_total   = number_format( $item_data['subtotal'] + $item_data['subtotal_tax'], 2 );
                     $subtotal     = $line_total / 1.125;
                     $subtotal_tax = $line_total - $subtotal;
+
+                    // after discount
+                    $line_total   = number_format( $item_data['total'] + $item_data['total_tax'], 2 );
+                    $total     = $line_total / 1.125;
+                    $total_tax = $line_total - $total;
 
                     ?>
                     <tr>
@@ -68,18 +75,18 @@ class OrderVatCorrectionManager {
                         <td><?php echo str_replace( '<br>', ' - ', $item_data['name'] ) ?></td>
                         <td><?php echo $item_data['tax_class'] ?></td>
                         <td><?php echo $item_data['quantity'] ?></td>
-                        <td><?php echo $item_data['subtotal'] ?></td>
-                        <td><?php echo $item_data['subtotal_tax'] ?></td>
-                        <td><?php echo $item_data['subtotal'] + $item_data['subtotal_tax'] ?></td>
+                        <td><?php echo $item_data['total'] ?></td>
+                        <td><?php echo $item_data['total_tax'] ?></td>
+                        <td><?php echo $item_data['total'] + $item_data['total_tax'] ?></td>
                     </tr>
                     <tr>
                         <td></td>
                         <td>Correction:</td>
-                        <td><?php $product->get_tax_class() ?></td>
+                        <td><?php echo $product->get_tax_class() ?></td>
                         <td><?php echo $item_data['quantity'] ?></td>
-                        <td><?php echo $subtotal ?></td>
-                        <td><?php echo $subtotal_tax ?></td>
-                        <td><?php echo $subtotal + $subtotal_tax ?></td>
+                        <td><?php echo $total ?></td>
+                        <td><?php echo $total_tax ?></td>
+                        <td><?php echo $total + $total_tax ?></td>
                     </tr>
                     <?php
 
@@ -89,17 +96,15 @@ class OrderVatCorrectionManager {
 
                         $taxes = $item->get_taxes();
                         $taxes['subtotal'][4] = $subtotal_tax;
-                        $taxes['total'][4] = $subtotal_tax;
+                        $taxes['total'][4] = $total_tax;
                         unset( $taxes['subtotal'][2] );
                         unset( $taxes['total'][2] );
-
-                        // Need to handle discount coupons...
 
                         $item->set_tax_class( $product->get_tax_class() );
                         $item->set_subtotal( $subtotal );
                         $item->set_subtotal_tax( $subtotal_tax );
-                        $item->set_total( $subtotal );
-                        $item->set_total_tax( $subtotal_tax );
+                        $item->set_total( $total );
+                        $item->set_total_tax( $total_tax );
                         $item->set_taxes( $taxes );
 
                         $item->save();
@@ -108,9 +113,61 @@ class OrderVatCorrectionManager {
                         // Log changes
                         $message = "Line Item Tax Correction:\n";
                         $message.= "Order #".$order->get_id().", Item: ".str_replace( '<br>', ' - ', $item_data['name'] ) ."\n";
-                        $message.= "Before - subtotal: ".$item_data['subtotal'].", tax: ".$item_data['subtotal_tax']."\n";
-                        $message.= "After  - subtotal: ".$subtotal.", tax: ".$subtotal_tax."\n";
+                        $message.= "Before - total: ".$item_data['total'].", tax: ".$item_data['total_tax']."\n";
+                        $message.= "After  - total: ".$total.", tax: ".$total_tax."\n";
                         $this->wc_logger->add( 'vat-correction', $message );
+                    }
+                }
+
+            }
+
+            // Handle discount coupon line items
+            if( $ticket_line_items_found ) {
+                // Only process coupons for orders where we're updating the ticket line items
+                foreach ( $order->get_items( 'coupon' ) as $item ) {
+
+                    $item_data = $item->get_data();
+
+                    if( $item_data['code'] == 'cqvip22' ) {
+                        // Calculations
+                        $line_total   = number_format( $item_data['discount'] + $item_data['discount_tax'], 2 );
+                        $discount     = $line_total / 1.125;
+                        $discount_tax = $line_total - $discount;
+
+                        ?>
+                        <tr>
+                            <td><strong>Order #<?php echo $order->get_id() ?></strong></td>
+                            <td>Coupon <?php echo $item_data['code'] ?></td>
+                            <td></td>
+                            <td></td>
+                            <td><?php echo $item_data['discount'] ?></td>
+                            <td><?php echo $item_data['discount_tax'] ?></td>
+                            <td><?php echo $item_data['discount'] + $item_data['discount_tax'] ?></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>Correction:</td>
+                            <td></td>
+                            <td></td>
+                            <td><?php echo $discount ?></td>
+                            <td><?php echo $discount_tax ?></td>
+                            <td><?php echo $discount + $discount_tax ?></td>
+                        </tr>
+                        <?php
+
+                        if( !$this->isDryRun() ) {
+                            $item->set_discount( $discount );
+                            $item->set_discount_tax( $discount_tax );
+                            $item->save();
+                            $updated = true;
+
+                            // Log changes
+                            $message = "Line Item Tax Correction:\n";
+                            $message.= "Order #".$order->get_id().", Item: Coupon ". $item_data['code'] ."\n";
+                            $message.= "Before - discount: ".$item_data['discount'].", discount tax: ".$item_data['discount_tax']."\n";
+                            $message.= "After  - discount: ".$discount.", discount tax: ".$discount_tax."\n";
+                            $this->wc_logger->add( 'vat-correction', $message );
+                        }
                     }
                 }
             }
@@ -122,9 +179,8 @@ class OrderVatCorrectionManager {
 
                 $order->add_order_note( 'Tax corrections applied to Event Tickets and Order Tax line items.');
 
-                #_dump($order);
-
                 $this->updateXero( $order );
+
                 //$this->sendInvoiceUpdatedEmail( $order );
                 die; // One at a time until we're confident
             }
