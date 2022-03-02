@@ -200,6 +200,7 @@ class OrderVatCorrectionManager {
             // End date
             $orders = wc_get_orders( array(
                 'date_paid' => $start.'...'.$end,
+                'limit' => -1,
             ) );
         }
 
