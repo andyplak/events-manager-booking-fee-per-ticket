@@ -22,8 +22,8 @@ class OrderVatCorrectionManager {
             'VAT Corrections',
             'manage_options',
             'events-vat-corrections',
-            //[$this, 'correctVat']
-            [$this, 'resubmitToXero']
+            [$this, 'correctVat']
+            //[$this, 'resubmitToXero']
         );
     }
 
