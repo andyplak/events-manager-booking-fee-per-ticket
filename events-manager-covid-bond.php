@@ -4,7 +4,7 @@
  * Plugin Name: Events Manager Covid Bonds
  * Plugin URI: https://github.com/andyplak/events-manager-covid-bonds
  * Description: Addition of Covid Bonds to Events Manager Tickets
- * Version: 1.2.1
+ * Version: 1.2.2
  * Author: Andy Place
  * Author URI: http://www.andyplace.co.uk/
  * License: GPLv2 or later

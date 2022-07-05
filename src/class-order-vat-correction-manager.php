@@ -22,7 +22,8 @@ class OrderVatCorrectionManager {
             'VAT Corrections',
             'manage_options',
             'events-vat-corrections',
-            [$this, 'correctVat']
+            //[$this, 'correctVat']
+            [$this, 'resubmitToXero']
         );
     }
 
@@ -187,6 +188,27 @@ class OrderVatCorrectionManager {
 
         }
         echo '</tbody></table>';
+    }
+
+    public function resubmitToXero() {
+
+        if( isset( $_REQUEST['id'] ) ) {
+            $order = wc_get_order( $_REQUEST['id'] );
+            $this->updateXero( $order );
+            echo 'Order '.$_REQUEST['id'].' resubmitted to Xero</li>';
+        }else{
+
+            $order_ids = [
+
+            ];
+
+            foreach( $order_ids as $id ) {
+                $order = wc_get_order( $id );
+                $this->updateXero( $order );
+                echo '<li>Order '.$id.' resubmitted to Xero</li>';
+                sleep(5);
+            }
+        }
     }
 
     private function loadOrders() {
