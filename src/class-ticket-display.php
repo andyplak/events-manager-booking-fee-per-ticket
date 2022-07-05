@@ -5,6 +5,7 @@ class TicketDisplay {
     const COVID_BOND_PERCENTAGE = 10;
 
     public function __construct() {
+
         // Booking form
         add_filter('em_booking_form_tickets_cols',           [$this, 'em_booking_form_tickets_cols'], 10, 2 );
         add_action('em_booking_form_tickets_col_cb_type',    [$this, 'em_booking_form_tickets_col_cb_type'] );
@@ -130,18 +131,22 @@ class TicketDisplay {
         $order = wc_get_order($order_id);
 
         foreach ( $order->get_items() as $item ) {
-            $is_event_ticket = Events_Manager_WooCommerce\Product::is_event_ticket( $item->get_product() );
 
-            if( $is_event_ticket ) {
-                $EM_Ticket = new EM_Ticket( $is_event_ticket['ticket_id'] );
-                if( $EM_Ticket ) {
-                    // Check if ticket has covid bond
-                    if( isset( $EM_Ticket->ticket_meta['covid_bond'] ) && $EM_Ticket->ticket_meta['covid_bond'] ) {
-                        $bond = ( $item->get_total() + $item->get_total_tax() ) / TicketDisplay::COVID_BOND_PERCENTAGE;
-                        if( isset( $bond_totals[ $item->get_meta('_em_booking_id') ] ) ) {
-                            $bond_totals[ $item->get_meta('_em_booking_id') ] += $bond;
-                        }else{
-                            $bond_totals[ $item->get_meta('_em_booking_id') ] = $bond;
+            if( class_exists( '\Events_Manager_WooCommerce\Product' ) ) {
+
+                $is_event_ticket = Events_Manager_WooCommerce\Product::is_event_ticket( $item->get_product() );
+
+                if( $is_event_ticket ) {
+                    $EM_Ticket = new EM_Ticket( $is_event_ticket['ticket_id'] );
+                    if( $EM_Ticket ) {
+                        // Check if ticket has covid bond
+                        if( isset( $EM_Ticket->ticket_meta['covid_bond'] ) && $EM_Ticket->ticket_meta['covid_bond'] ) {
+                            $bond = ( $item->get_total() + $item->get_total_tax() ) / TicketDisplay::COVID_BOND_PERCENTAGE;
+                            if( isset( $bond_totals[ $item->get_meta('_em_booking_id') ] ) ) {
+                                $bond_totals[ $item->get_meta('_em_booking_id') ] += $bond;
+                            }else{
+                                $bond_totals[ $item->get_meta('_em_booking_id') ] = $bond;
+                            }
                         }
                     }
                 }
