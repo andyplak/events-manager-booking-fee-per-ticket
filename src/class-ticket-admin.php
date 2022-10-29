@@ -11,32 +11,34 @@ class TicketAdmin {
     public function em_ticket_save_pre( $EM_Ticket ) {
         foreach( $_REQUEST[ 'em_tickets' ] as $request_ticket ) {
             if( $request_ticket['ticket_id'] == $EM_Ticket->ticket_id ) {
-                if( isset( $request_ticket[ 'ticket_covid_bond' ] ) ) {
-                    $EM_Ticket->ticket_meta['covid_bond'] = absint( $request_ticket[ 'ticket_covid_bond' ] );
-                }elseif( isset( $EM_Ticket->ticket_meta['covid_bond'] ) && $EM_Ticket->ticket_meta['covid_bond'] == 1 ) {
-                    $EM_Ticket->ticket_meta['covid_bond'] = 0;
+                if( isset( $request_ticket[ 'ticket_booking_fee' ] ) ) {
+                    $EM_Ticket->ticket_meta['booking_fee'] = absint( $request_ticket[ 'ticket_booking_fee' ] );
+                }elseif( isset( $EM_Ticket->ticket_meta['booking_fee'] ) && $EM_Ticket->ticket_meta['booking_fee'] == 1 ) {
+                    $EM_Ticket->ticket_meta['booking_fee'] = 0;
                 }
             }
         }
     }
 
     public function em_event_edit_ticket_td( $EM_Ticket ) {
-        if( $this->has_covid_bond( $EM_Ticket ) ) {
-            echo '<td><small>Non refundable CIP</small></td>';
+        if( $fee = $this->get_booking_fee( $EM_Ticket ) ) {
+            echo '<td><small>Booking Fee: '.$EM_Ticket->format_price( $fee ).'</small></td>';
         }
     }
 
     public function em_ticket_edit_form_fields( $col_count, $EM_Ticket ) {
-        $checked = ( $this->has_covid_bond( $EM_Ticket ) ? 'checked="checked"' : '' );
         ?>
-        <div class="covid-bond">
-			<label title="<?php esc_attr_e('If checked tickets will have info about the bond displayed to users.','events-manager'); ?>"><?php esc_html_e('Non refundable CIP?','events-manager') ?></label>
-			<input type="checkbox" value="1" name="em_tickets[<?php echo $col_count; ?>][ticket_covid_bond]" <?php echo $checked ?> class="covid_bond" />
-		</div>
+        <div class="booking-fee">
+            <label title="<?php esc_attr_e('If checked tickets will have info about the booking fee displayed to users.','events-manager'); ?>">
+                <?php esc_html_e('Booking Fee','events-manager') ?>
+            </label>
+            <input type="text" value="<?php echo $this->get_booking_fee( $EM_Ticket ) ?>" name="em_tickets[<?php echo $col_count; ?>][ticket_booking_fee]" class="booking_fee" />
+            <em><?php esc_html_e('Leave blank for no booking fee','events-manager') ?></em>
+        </div>
         <?php
     }
 
-    private function has_covid_bond( $EM_Ticket ) {
-        return ( isset( $EM_Ticket->ticket_meta['covid_bond'] ) && $EM_Ticket->ticket_meta['covid_bond'] ? true : false );
+    private function get_booking_fee( $EM_Ticket ) {
+        return ( isset( $EM_Ticket->ticket_meta['booking_fee'] ) ? $EM_Ticket->ticket_meta['booking_fee'] : null );
     }
 }

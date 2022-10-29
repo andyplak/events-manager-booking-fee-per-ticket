@@ -1,10 +1,10 @@
 <?php
 
 /**
- * Plugin Name: Events Manager Covid Bonds
+ * Plugin Name: Events Manager - Ticket Booking Fees
  * Plugin URI: https://github.com/andyplak/events-manager-covid-bonds
- * Description: Addition of Covid Bonds to Events Manager Tickets
- * Version: 1.3
+ * Description: Allows booking fees to be configured per ticket
+ * Version: 2.0
  * Author: Andy Place
  * Author URI: http://www.andyplace.co.uk/
  * License: GPLv2 or later
@@ -16,7 +16,7 @@ if ( ! defined( 'WPINC' ) ) {
     die;
 }
 
-function ad_ac_init() {
+function em_booking_fees_init() {
     require plugin_dir_path( __FILE__ ) . 'src/class-ticket-display.php';
     new TicketDisplay();
 
@@ -28,4 +28,4 @@ function ad_ac_init() {
         new TicketAdmin();
     }
 }
-ad_ac_init();
+em_booking_fees_init();
