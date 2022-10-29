@@ -39,6 +39,6 @@ class TicketAdmin {
     }
 
     private function get_booking_fee( $EM_Ticket ) {
-        return ( isset( $EM_Ticket->ticket_meta['booking_fee'] ) ? $EM_Ticket->ticket_meta['booking_fee'] : null );
+        return ( isset( $EM_Ticket->ticket_meta['booking_fee'] ) && $EM_Ticket->ticket_meta['booking_fee'] > 0 ? $EM_Ticket->ticket_meta['booking_fee'] : null );
     }
 }

@@ -2,7 +2,7 @@
 
 /**
  * Plugin Name: Events Manager - Ticket Booking Fees
- * Plugin URI: https://github.com/andyplak/events-manager-covid-bonds
+ * Plugin URI: https://github.com/andyplak/events-manager-booking-fee-per-ticket
  * Description: Allows booking fees to be configured per ticket
  * Version: 2.0
  * Author: Andy Place

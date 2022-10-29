@@ -5,7 +5,7 @@
  * Here you can assume that $EM_Event is globally available with the right EM_Event object.
  */
 global $EM_Event;
-$total_bond = 0;
+$total_fee = 0;
 $total_revenue = 0;
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -26,7 +26,7 @@ $total_revenue = 0;
 			<th scope='col'><?php _e('Name', 'events-manager')?></th>
 			<th scope='col'><?php _e('E-mail', 'events-manager')?></th>
 			<th scope='col'><?php _e('Spaces', 'events-manager')?></th>
-			<th scope='col'><?php _e('CIP', 'events-manager')?></th>
+			<th scope='col'><?php _e('Booking Fee', 'events-manager')?></th>
 			<th scope='col'><?php _e('Price', 'events-manager')?></th>
 		</tr>
 		<?php foreach($EM_Event->get_bookings()->bookings as $EM_Booking) {
@@ -36,17 +36,17 @@ $total_revenue = 0;
 			<td><?php echo $EM_Booking->person->get_name() ?></td>
 			<td><?php echo $EM_Booking->person->user_email ?></td>
 			<td class='spaces-number'><?php echo $EM_Booking->get_spaces() ?></td>
-			<td><?php echo ( isset( $EM_Booking->booking_meta['covid_bond_total'] ) ? $EM_Booking->format_price( $EM_Booking->booking_meta['covid_bond_total'] ) : '' ) ?></td>
+			<td><?php echo ( isset( $EM_Booking->booking_meta['booking_fee_total'] ) ? $EM_Booking->format_price( $EM_Booking->booking_meta['booking_fee_total'] ) : '' ) ?></td>
 			<td><?php echo $EM_Booking->get_price(true) ?></td>
 		</tr>
 	   	<?php
-				$total_bond    += ( isset( $EM_Booking->booking_meta['covid_bond_total'] ) ? $EM_Booking->booking_meta['covid_bond_total'] : 0 );
+				$total_fee     += ( isset( $EM_Booking->booking_meta['booking_fee_total'] ) ? $EM_Booking->booking_meta['booking_fee_total'] : 0 );
 				$total_revenue += $EM_Booking->get_price();
 			}
 		} ?>
 		<tr id='booked-spaces'>
 			<td colspan='3'>&nbsp;</td>
-			<td><strong><?php echo $EM_Event->format_price( $total_bond ) ?></strong></td>
+			<td><strong><?php echo $EM_Event->format_price( $total_fee ) ?></strong></td>
 			<td><strong><?php echo $EM_Event->format_price( $total_revenue ) ?></strong></td>
 		</tr>
 		<tr>

@@ -8,18 +8,14 @@ class TicketDisplay {
 
         // Booking form
         add_filter('em_booking_form_tickets_cols',           [$this, 'em_booking_form_tickets_cols'], 10, 2 );
-        add_action('em_booking_form_tickets_col_cb_type',    [$this, 'em_booking_form_tickets_col_cb_type'] );
-        add_action('em_booking_form_tickets_col_covid_bond', [$this, 'em_booking_form_tickets_col_covid_bond'] );
+        add_action('em_booking_form_tickets_col_bf_type',    [$this, 'em_booking_form_tickets_col_bf_type'] );
+        add_action('em_booking_form_tickets_col_booking_fee', [$this, 'em_booking_form_tickets_col_booking_fee'] );
         add_action('em_booking_form_tickets_col_refundable', [$this, 'em_booking_form_tickets_col_refundable'] );
 
-        // Store covid bond data in booking meta
+        // Store booking fee data in booking meta
         add_action('woocommerce_checkout_update_order_meta', [$this, 'woocommerce_checkout_update_order_meta'], 20, 1);
 
         // WC Cart & Checkout
-        #add_action( 'woocommerce_after_cart_item_name', [$this, 'woocommerce_after_cart_item_name'], 10, 2 );
-        #add_filter( 'woocommerce_cart_item_price', [$this, 'woocommerce_cart_item_price'], 10, 3 );
-
-        #add_filter( 'woocommerce_cart_item_name', [$this, 'woocommerce_cart_item_name'], 10, 3 );
         add_filter( 'woocommerce_cart_item_subtotal', [$this, 'woocommerce_cart_item_subtotal'], 10, 3 );
         add_filter( 'woocommerce_cart_totals_before_order_total', [$this, 'woocommerce_totals_before_order_total'] );
         add_filter( 'woocommerce_review_order_before_order_total', [$this, 'woocommerce_totals_before_order_total'] );
@@ -37,16 +33,16 @@ class TicketDisplay {
     }
 
     public function em_booking_form_tickets_cols( $columns, $EM_Event ) {
-        // Check event is setup for Covid Bonds?
+        // Check event is setup for Booking Fees?
         {
             $price  = $columns['price'];
             $spaces = $columns['spaces'];
             unset( $columns['price'] );
             unset( $columns['spaces'] );
             unset( $columns['type'] );
-            $columns['cb_type']    = __('Ticket Type', 'events-manager');
-            $columns['refundable'] = __('Refundable Portion','events-manager');
-            $columns['covid_bond'] = __('Non refundable CIP','events-manager');
+            $columns['bf_type']    = __('Ticket Type', 'events-manager');
+            $columns['refundable'] = __('Refundable','events-manager');
+            $columns['booking_fee'] = __('Booking Fee','events-manager');
             $columns['price']      = $price;
             $columns['spaces']     = $spaces;
         }
@@ -54,15 +50,14 @@ class TicketDisplay {
     }
 
     /**
-     * This replaces the default type column in the ticket list. Allows us to add extra info at the end of the description
+     * This replaces the default type column in the ticket list.
+     * Allows us to add extra info at the end of the description
      */
-    public function em_booking_form_tickets_col_cb_type($EM_Ticket) {
-        $bond_info = '';
-        if( $this->has_covid_bond( $EM_Ticket ) ) {
-            $price = $EM_Ticket->get_price();
-            $bond = $price / Self::COVID_BOND_PERCENTAGE;
-            $bond_info = '<br /><span class="covid-bond-xs-summary">(includes '
-                .$EM_Ticket->format_price( $bond ).' non refundable CIP)</span>';
+    public function em_booking_form_tickets_col_bf_type($EM_Ticket) {
+        $fee_info = '';
+        if( $fee = $this->get_booking_fee( $EM_Ticket ) ) {
+            $fee_info = '<br /><span class="booking-fee-xs-summary">(includes '
+                .$EM_Ticket->format_price( $fee ).' non refundable Booking Fee)</span>';
         }
         ?>
         <td class="em-bookings-ticket-table-type">
@@ -70,64 +65,43 @@ class TicketDisplay {
             <?php if(!empty($EM_Ticket->ticket_description)) :?><br>
                 <span class="ticket-desc"><?php echo $EM_Ticket->ticket_description ?></span>
             <?php endif; ?>
-            <?php echo $bond_info ?>
+            <?php echo $fee_info ?>
         </td>
         <?php
     }
 
-    public function em_booking_form_tickets_col_covid_bond($EM_Ticket) {
-        if( $this->has_covid_bond( $EM_Ticket ) ) {
-            $price = $EM_Ticket->get_price();
-            $bond = $price / Self::COVID_BOND_PERCENTAGE;
-
+    public function em_booking_form_tickets_col_booking_fee($EM_Ticket) {
+        if( $fee = $this->get_booking_fee( $EM_Ticket ) ) {
             ?>
-            <td class="em-bookings-ticket-table-covid_bond">
-                <?php echo $EM_Ticket->format_price( $bond ) ?>
+            <td class="em-bookings-ticket-table-booking_fee">
+                <?php echo $EM_Ticket->format_price( $fee ) ?>
             </td>
             <?php
         }else{
-            echo '<td class="em-bookings-ticket-table-covid_bond"></td>';
+            echo '<td class="em-bookings-ticket-table-booking_fee"></td>';
         }
     }
 
     public function em_booking_form_tickets_col_refundable($EM_Ticket) {
-        if( $this->has_covid_bond( $EM_Ticket ) ) {
+        if( $fee = $this->get_booking_fee( $EM_Ticket ) ) {
             $price = $EM_Ticket->get_price();
-            $refundable = ( $price / Self::COVID_BOND_PERCENTAGE ) * 9;
-
+            $refundable = $price - $fee;
             ?>
             <td class="em-bookings-ticket-table-refundable">
                 <?php echo $EM_Ticket->format_price( $refundable ) ?>
             </td>
             <?php
-        }else{
+        } else {
             echo '<td class="em-bookings-ticket-table-refundable"></td>';
         }
     }
 
-
-    #public function woocommerce_after_cart_item_name( $cart_item, $cart_item_key ) {
-    #    // check ticket has covid bond enabled
-    #    {
-    #        echo '<div><em>Includes Non refundable CIP</em></div>';
-    #    }
-    #}
-
-    #public function woocommerce_cart_item_price( $price, $cart_item, $cart_item_key ) {
-    #    // check ticket has covid bond enabled
-    #    {
-    #        $product = apply_filters( 'woocommerce_cart_item_product', $cart_item['data'], $cart_item, $cart_item_key );
-    #        $bond    = $product->get_price() / Self::COVID_BOND_PERCENTAGE;
-    #        $price  .= '<br /><em>'. wc_price( $bond ) .'</em>';
-    #    }
-    #    return $price;
-    #}
-
-    // Save CIP totals into booking_meta after checkout
+    // Save booking fee totals into booking_meta after checkout
     public function woocommerce_checkout_update_order_meta( $order_id ) {
 
-        // We need to store the totals in an array per booking, as an single order 'could' contain line items from different bookings
-        $bond_totals = [];
+        // We need to store the totals in an array per booking,
+        // as a single order 'could' contain line items from different bookings
+        $fee_totals = [];
         $order = wc_get_order($order_id);
 
         foreach ( $order->get_items() as $item ) {
@@ -139,13 +113,12 @@ class TicketDisplay {
                 if( $is_event_ticket ) {
                     $EM_Ticket = new EM_Ticket( $is_event_ticket['ticket_id'] );
                     if( $EM_Ticket ) {
-                        // Check if ticket has covid bond
-                        if( isset( $EM_Ticket->ticket_meta['covid_bond'] ) && $EM_Ticket->ticket_meta['covid_bond'] ) {
-                            $bond = ( $item->get_total() + $item->get_total_tax() ) / TicketDisplay::COVID_BOND_PERCENTAGE;
-                            if( isset( $bond_totals[ $item->get_meta('_em_booking_id') ] ) ) {
-                                $bond_totals[ $item->get_meta('_em_booking_id') ] += $bond;
+                        // Check if ticket has booking fee
+                        if( $fee = $this->get_booking_fee( $EM_Ticket ) ) {
+                            if( isset( $fee_totals[ $item->get_meta('_em_booking_id') ] ) ) {
+                                $fee_totals[ $item->get_meta('_em_booking_id') ] += $fee;
                             }else{
-                                $bond_totals[ $item->get_meta('_em_booking_id') ] = $bond;
+                                $fee_totals[ $item->get_meta('_em_booking_id') ] = $fee;
                             }
                         }
                     }
@@ -153,10 +126,10 @@ class TicketDisplay {
             }
         }
 
-        foreach( $bond_totals as $booking_id => $bond_total ) {
-            if( $bond_total > 0 ) {
+        foreach( $fee_totals as $booking_id => $fee_total ) {
+            if( $fee_total > 0 ) {
                 $EM_Booking = em_get_booking( $booking_id );
-                $EM_Booking->update_meta( 'covid_bond_total', $bond_total );
+                $EM_Booking->update_meta( 'booking_fee_total', $fee_total );
             }
         }
     }
@@ -173,34 +146,36 @@ class TicketDisplay {
             $product = apply_filters( 'woocommerce_cart_item_product', $cart_item['data'], $cart_item, $cart_item_key );
             $EM_Ticket = new EM_Ticket( $cart_item['_em_ticket_id'] );
 
-            // check ticket has covid bond enabled
-            if( $EM_Ticket && $this->has_covid_bond( $EM_Ticket ) ) {
-                $bond    = ( $product->get_price() * $cart_item['quantity'] ) / Self::COVID_BOND_PERCENTAGE;
-                $subtotal .= '&nbsp;<small>(includes '.wc_price( $bond ).' non refundable CIP)</small>';
+            // check ticket has booking fee enabled
+            if( $EM_Ticket ) {
+                if( $fee = $this->get_booking_fee( $EM_Ticket ) ) {
+                    $subtotal .= '&nbsp;<small>(includes '.wc_price( $fee ).' non refundable booking fee)</small>';
+                }
             }
         }
         return $subtotal;
     }
 
     public function woocommerce_totals_before_order_total() {
-        $total_bond = 0;
+        $total_fee = 0;
 
         foreach ( WC()->cart->get_cart() as $cart_item_key => $cart_item ) {
             if( isset( $cart_item['_em_ticket_id'] ) ) {
                 $EM_Ticket = new EM_Ticket( $cart_item['_em_ticket_id'] );
-
-                if( $EM_Ticket && $this->has_covid_bond( $EM_Ticket ) ) {
-                    $total_bond += ( $cart_item['line_total'] + $cart_item['line_tax'] ) / Self::COVID_BOND_PERCENTAGE;
+                if( $EM_Ticket ) {
+                    if( $fee = $this->get_booking_fee( $EM_Ticket ) ) {
+                        $total_fee += $fee;
+                    }
                 }
             }
         }
 
-        if( $total_bond > 0 ) {
+        if( $total_fee > 0 ) {
             ?>
-            <tr class="covid-bond-total">
-                <th>Includes non refundable CIP</th>
-                <td data-title="Includes non refundable CIP">
-                    <span class="woocommerce-Price-amount amount"><bdi><?php echo wc_price( $total_bond ) ?></bdi></span>
+            <tr class="booking-fee-total">
+                <th>Includes non refundable Booking Fee</th>
+                <td data-title="Includes non refundable Booking Fee">
+                    <span class="woocommerce-Price-amount amount"><bdi><?php echo wc_price( $total_fee ) ?></bdi></span>
                 </td>
             </tr>
             <?php
@@ -210,35 +185,33 @@ class TicketDisplay {
     public function woocommerce_order_item_meta_end( $item_id, $item, $order, $plain_text = false ) {
         if( $ticket_id = $item->get_meta('_em_ticket_id') ) {
             $EM_Ticket  = new EM_Ticket( $ticket_id );
-            if( $EM_Ticket && $this->has_covid_bond( $EM_Ticket ) ) {
-                #$booking_id = $item->get_meta('_em_booking_id');
-                #$EM_Booking = em_get_booking( $booking_id );
-                #$ticket_bookings = $EM_Booking->get_tickets_bookings();
-                $price = $EM_Ticket->get_price();
-                $bond  = ( $price * $item->get_quantity() ) / Self::COVID_BOND_PERCENTAGE;
-                echo '<br /><em>Includes '.wc_price( $bond ).' non refundable CIP</em>';
+            if( $EM_Ticket ) {
+                if( $fee = $this->get_booking_fee( $EM_Ticket ) ) {
+                    echo '<br /><em>Includes '.wc_price( $fee ).' non refundable Booking Fee</em>';
+                }
             }
         }
     }
 
     public function woocommerce_admin_order_item_headers( $order ) {
-        echo '<th class="covid_bond sortable" data-sort="float">CB</th>';
+        echo '<th class="booking_fee sortable" data-sort="float">CB</th>';
     }
 
     public function woocommerce_admin_order_item_values( $product, $item, $item_id ) {
-        $bond = '';
+        $fee = '';
         if( $product && ( $ticket_id = $item->get_meta('_em_ticket_id') ) ) {
             $EM_Ticket = new EM_Ticket( $ticket_id );
-            if( $EM_Ticket && $this->has_covid_bond( $EM_Ticket ) ) {
-                $subtotal = $item->get_order()->get_item_subtotal( $item, false, true );
-                $bond  = $subtotal / Self::COVID_BOND_PERCENTAGE;
-                $bond = wc_price( $bond );
+            if( $EM_Ticket ) {
+                if( $fee = $this->get_booking_fee( $EM_Ticket ) ) {
+                    $fee = wc_price( $fee );
+                }
             }
         }
-        echo '<td>'.$bond.'</td>';
+        echo '<td>'.$fee.'</td>';
     }
 
-    private function has_covid_bond( $EM_Ticket ) {
-        return ( isset( $EM_Ticket->ticket_meta['covid_bond'] ) && $EM_Ticket->ticket_meta['covid_bond'] ? true : false );
+    private function get_booking_fee( $EM_Ticket ) {
+        return ( isset( $EM_Ticket->ticket_meta['booking_fee'] ) && $EM_Ticket->ticket_meta['booking_fee'] > 0 ? $EM_Ticket->ticket_meta['booking_fee'] : null );
     }
+
 }
