@@ -143,6 +143,7 @@ class TicketDisplay {
             // check ticket has booking fee enabled
             if( $EM_Ticket ) {
                 if( $fee = $this->get_booking_fee( $EM_Ticket ) ) {
+                    $fee = $fee * $cart_item['quantity'];
                     $subtotal .= '&nbsp;<small>(includes '.wc_price( $fee ).' non refundable booking fee)</small>';
                 }
             }
@@ -158,7 +159,7 @@ class TicketDisplay {
                 $EM_Ticket = new EM_Ticket( $cart_item['_em_ticket_id'] );
                 if( $EM_Ticket ) {
                     if( $fee = $this->get_booking_fee( $EM_Ticket ) ) {
-                        $total_fee += $fee;
+                        $total_fee += ( $fee * $cart_item['quantity'] );
                     }
                 }
             }
@@ -179,8 +180,10 @@ class TicketDisplay {
     public function woocommerce_order_item_meta_end( $item_id, $item, $order, $plain_text = false ) {
         if( $ticket_id = $item->get_meta('_em_ticket_id') ) {
             $EM_Ticket  = new EM_Ticket( $ticket_id );
+
             if( $EM_Ticket ) {
                 if( $fee = $this->get_booking_fee( $EM_Ticket ) ) {
+                    $fee = $fee * $item->get_quantity();
                     echo '<br /><em>Includes '.wc_price( $fee ).' non refundable Booking Fee</em>';
                 }
             }
