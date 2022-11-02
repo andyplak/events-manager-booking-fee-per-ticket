@@ -109,6 +109,7 @@ class TicketDisplay {
                     if( $EM_Ticket ) {
                         // Check if ticket has booking fee
                         if( $fee = $this->get_booking_fee( $EM_Ticket ) ) {
+                            $fee = $fee * $item->get_quantity();
                             if( isset( $fee_totals[ $item->get_meta('_em_booking_id') ] ) ) {
                                 $fee_totals[ $item->get_meta('_em_booking_id') ] += $fee;
                             }else{
