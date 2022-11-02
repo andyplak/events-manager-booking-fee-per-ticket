@@ -2,8 +2,6 @@
 
 class TicketDisplay {
 
-    const COVID_BOND_PERCENTAGE = 10;
-
     public function __construct() {
 
         // Booking form
@@ -35,16 +33,15 @@ class TicketDisplay {
     public function em_booking_form_tickets_cols( $columns, $EM_Event ) {
         // Check event is setup for Booking Fees?
         {
-            $price  = $columns['price'];
             $spaces = $columns['spaces'];
             unset( $columns['price'] );
             unset( $columns['spaces'] );
             unset( $columns['type'] );
-            $columns['bf_type']    = __('Ticket Type', 'events-manager');
-            $columns['refundable'] = __('Refundable','events-manager');
+            $columns['bf_type']     = __('Ticket Type', 'events-manager');
+            $columns['refundable']  = __('Ticket Price','events-manager');
             $columns['booking_fee'] = __('Booking Fee','events-manager');
-            $columns['price']      = $price;
-            $columns['spaces']     = $spaces;
+            $columns['price']       = __('Total Price','events-manager');
+            $columns['spaces']      = $spaces;
         }
         return $columns;
     }
@@ -83,17 +80,14 @@ class TicketDisplay {
     }
 
     public function em_booking_form_tickets_col_refundable($EM_Ticket) {
-        if( $fee = $this->get_booking_fee( $EM_Ticket ) ) {
-            $price = $EM_Ticket->get_price();
-            $refundable = $price - $fee;
-            ?>
-            <td class="em-bookings-ticket-table-refundable">
-                <?php echo $EM_Ticket->format_price( $refundable ) ?>
-            </td>
-            <?php
-        } else {
-            echo '<td class="em-bookings-ticket-table-refundable"></td>';
-        }
+        $fee = $this->get_booking_fee( $EM_Ticket );
+        $price = $EM_Ticket->get_price();
+        $refundable = $price - $fee;
+        ?>
+        <td class="em-bookings-ticket-table-refundable">
+            <?php echo $EM_Ticket->format_price( $refundable ) ?>
+        </td>
+        <?php
     }
 
     // Save booking fee totals into booking_meta after checkout
