@@ -33,7 +33,8 @@ class TicketAdmin {
                 <?php esc_html_e('Booking Fee','events-manager') ?>
             </label>
             <input type="text" value="<?php echo $this->get_booking_fee( $EM_Ticket ) ?>" name="em_tickets[<?php echo $col_count; ?>][ticket_booking_fee]" class="booking_fee" />
-            <em><?php esc_html_e('Leave blank for no booking fee','events-manager') ?></em>
+            <em><?php esc_html_e('Leave blank for no booking fee.','events-manager') ?></em>
+            <em><?php esc_html_e('Note, ticket price above is inclusive of the booking fee.','events-manager') ?></em>
         </div>
         <?php
     }
