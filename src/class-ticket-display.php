@@ -192,7 +192,7 @@ class TicketDisplay {
     }
 
     public function woocommerce_admin_order_item_headers( $order ) {
-        echo '<th class="booking_fee sortable" data-sort="float">CB</th>';
+        echo '<th class="booking_fee sortable" data-sort="float">Booking Fee</th>';
     }
 
     public function woocommerce_admin_order_item_values( $product, $item, $item_id ) {
